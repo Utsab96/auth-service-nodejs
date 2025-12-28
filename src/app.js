@@ -1,15 +1,18 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
 
 const authRoutes = require("./routes/auth.routes");
 const errorHandler = require("./middlewares/error.middleware");
+const { swaggerUi, specs } = require("./config/swagger");
 
 const app = express();
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
-
+app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 
@@ -19,7 +22,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message });
 });
 
-
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 // ❗ MUST be last
 app.use(errorHandler);
 
