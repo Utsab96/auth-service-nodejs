@@ -1,51 +1,34 @@
+const AppError = require("../utils/appError");
 const { createUser, findUserByEmail } = require("../repositories/user.repository");
 const { hashPassword, comparePassword } = require("../utils/hash.util");
 const { signToken } = require("../config/jwt");
 
-const register = async ({ email, password }) => {
+const register = async ({ name, email, password }) => {
   const existingUser = await findUserByEmail(email);
   if (existingUser) {
-    throw new Error("User already exists");
+    throw new AppError("User already exists", 409);
   }
 
   const hashedPassword = await hashPassword(password);
-
-  // ✅ ONLY email + password
-  const user = await createUser(email, hashedPassword);
+  const user = await createUser(name, email, hashedPassword);
 
   const token = signToken({ id: user.id });
-
-  return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      created_at: user.created_at,
-    },
-  };
+  return { user, token };
 };
 
 const login = async ({ email, password }) => {
   const user = await findUserByEmail(email);
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new AppError("Invalid email or password", 401);
   }
 
   const isMatch = await comparePassword(password, user.password);
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    throw new AppError("Invalid email or password", 401);
   }
 
   const token = signToken({ id: user.id });
-
-  return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      created_at: user.created_at,
-    },
-  };
+  return { token };
 };
 
 module.exports = { register, login };
